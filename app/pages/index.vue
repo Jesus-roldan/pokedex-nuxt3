@@ -2,6 +2,7 @@
 import { ref, computed } from 'vue'
 
 const search =ref('')
+const selectedType = ref('')
 
 const pokemons = ref([
   { name: 'Bulbasaur', type: 'Grass/Poison' },
@@ -16,9 +17,17 @@ const pokemons = ref([
 ])
 
 const filteredPokemons = computed(() => {
-  return pokemons.value.filter(pokemon =>
-    pokemon.name.toLowerCase().includes(search.value.toLowerCase())
-  )
+  const query = search.value.toLowerCase()
+
+  return pokemons.value.filter(pokemon => {
+    const name = pokemon.name ? pokemon.name.toLowerCase() : ''
+    const matchesName = name.includes(query)
+
+    const type = pokemon.type || '' 
+    const matchesType = !selectedType.value || type.includes(selectedType.value)
+    
+    return matchesName && matchesType
+  })
 })
 
 
@@ -34,6 +43,16 @@ const filteredPokemons = computed(() => {
       <PokemonCard v-for="pokemon in filteredPokemons":key="pokemon.name":pokemon="pokemon"/>
     </div>
 
+    <div class="filters">
+      <span>Filtrer par type : </span>
+      <el-radio-group v-model="selectedType" size="small">
+        <el-radio-button label="">Todos</el-radio-button>
+        <el-radio-button label="Grass">Grass</el-radio-button>
+        <el-radio-button label="Fire">Fire</el-radio-button>
+        <el-radio-button label="Water">Water</el-radio-button>
+      </el-radio-group>
+    </div>
+
 
 </div>
 
@@ -44,6 +63,15 @@ const filteredPokemons = computed(() => {
   max-width: 800px;
   margin: 0 auto;
   padding: 2rem;
+}
+
+.filters {
+  margin-bottom: 2rem;
+}
+
+.filters span {
+  margin-right: 10px;
+  font-weight: bold;
 }
 
 .pokemon-list {
