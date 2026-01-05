@@ -4,13 +4,29 @@ const props = defineProps({
   pokemon: {
     type: Object,
     required: true
+  },
+  isFavorite: {
+    type: Boolean,
+    required: true
   }
 })
+
+const emit = defineEmits(['toggle-fav'])
 
 </script>
 
 <template>
   <el-card class="pokemon-card">
+    <div class="card-header">
+      <span class="id">#{{ pokemon.id }}</span>
+      <el-button class="fav-btn"
+        :type="isFavorite ? 'danger' : 'info'"
+        icon="Star"
+        circle
+        size="small"
+        @click="emit('toggle-fav')"
+      />
+    </div>
     <img :src="props.pokemon.image" :alt="props.pokemon.name" class="pokemon-image" />
     <div class="info">
     <h3>{{ props.pokemon.name }}</h3>
@@ -28,6 +44,17 @@ const props = defineProps({
 </template>
 
 <style scoped>
+ .card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.id {
+  font-weight: bold;
+}
+.fav-btn {
+  font-size: 1rem;
+} 
 .pokemon-image {
   width: 120px;
   height: 120px;

@@ -3,6 +3,23 @@ import { ref, computed, onMounted } from 'vue'
 
 const search =ref('')
 const selectedType = ref('')
+const favorites = ref([])
+
+onMounted(() => {
+  const saved = localStorage.getItem('pokedex-favs')
+  if (saved) {
+    favorites.value = JSON.parse(saved)
+  }
+})
+
+const toggleFavorite = (id) => {
+  if (favorites.value.includes(id)) {
+    favorites.value = favorites.value.filter(favId => favId !== id)
+  } else {
+    favorites.value.push(id)
+  }
+  localStorage.setItem('pokedex-favs', JSON.stringify(favorites.value))
+}
 
 // --- Appel à l'API ---
   
@@ -25,13 +42,16 @@ const { data: pokemons, pending, error } = await useAsyncData('pokemons-list', a
   }))
 })
 
+const showOnlyFavorites = ref(false)
   
 const filteredPokemons = computed(() => {
   if (!pokemons.value) return []
   return pokemons.value.filter(p => {
     const matchesName = p.name.toLowerCase().includes(search.value.toLowerCase())
     const matchesType = !selectedType.value || p.types.includes(selectedType.value)
-    return matchesName && matchesType
+    const matchesFav = !showOnlyFavorites.value || favorites.value.includes(p.id)
+
+    return matchesName && matchesType && matchesFav
   })
 })
 
@@ -61,9 +81,14 @@ const filteredPokemons = computed(() => {
         <el-radio-button label="water">Water</el-radio-button>
       </el-radio-group>
     </div>
+    <el-switch
+          v-model="showOnlyFavorites"
+          active-text="Voir uniquement mes favoris"
+          style="margin-left: 20px"
+    />
 
     <div class="pokemon-list">
-      <PokemonCard v-for="pokemon in filteredPokemons":key="pokemon.name":pokemon="pokemon"/>
+      <PokemonCard v-for="pokemon in filteredPokemons":key="pokemon.name":pokemon="pokemon":is-favorite="favorites.includes(pokemon.id)"@toggle-fav="toggleFavorite(pokemon.id)" />
     </div>
 </div>
 
