@@ -1,75 +1,40 @@
-# Nuxt Minimal Starter
+# Projet Pokédex - Nuxt 3 & PokéAPI
 
-Look at the [Nuxt documentation](https://nuxt.com/docs/getting-started/introduction) to learn more.
+Ce projet est une application Pokédex moderne construite avec **Nuxt 4** et **Element Plus**. Il permet d'explorer les 151 premiers Pokémon de la première génération, de les filtrer et de gérer une liste de favoris.
 
-## Setup
+![Aperçu du Pokédex](./public/img/screenshot-1.png)
 
-Make sure to install dependencies:
+## Fonctionnalités
 
-```bash
-# npm
-npm install
+- **Appel à l'API** : Récupération des données en temps réel depuis la [PokéAPI](https://pokeapi.co/).
+- **Recherche Dynamique** : Filtrage par nom via la barre de recherche.
+- **Filtrage par Type** : Sélection par type (Plante, Feu, Eau, etc.) avec mise à jour instantanée.
+- **Système de Favoris** : 
+  - Marquage des Pokémon favoris via une icône de cœur.
+  - **Persistance** : Sauvegarde automatique dans le `localStorage` du navigateur.
+- **Mode Favoris** : Filtre spécial pour afficher uniquement les Pokémon sauvegardés.
+- **UI/UX** : Interface responsive et moderne utilisant les composants **Element Plus**.
 
-# pnpm
-pnpm install
+![Système de Favoris](./public/img/screenshot-2.png)
 
-# yarn
-yarn install
+## Technologies utilisées
 
-# bun
-bun install
-```
+- **Framework** : [Nuxt 4](https://nuxt.com/)
+- **UI Library** : [Element Plus](https://element-plus.org/)
+- **Data Source** : [PokéAPI](https://pokeapi.co/)
+- **State** : Vue.js Composition API (ref, computed)
 
-## Development Server
+## Installation et Démarrage
 
-Start the development server on `http://localhost:3000`:
+1. **Installer les dépendances** :
+   ```bash
+   npm install
+2. **Lancer le serveur de développement** :   
+   npm run dev
 
-```bash
-# npm
-npm run dev
+L'application sera disponible sur http://localhost:3000  
 
-# pnpm
-pnpm dev
+## Structure du Projet
 
-# yarn
-yarn dev
-
-# bun
-bun run dev
-```
-
-## Production
-
-Build the application for production:
-
-```bash
-# npm
-npm run build
-
-# pnpm
-pnpm build
-
-# yarn
-yarn build
-
-# bun
-bun run build
-```
-
-Locally preview production build:
-
-```bash
-# npm
-npm run preview
-
-# pnpm
-pnpm preview
-
-# yarn
-yarn preview
-
-# bun
-bun run preview
-```
-
-Check out the [deployment documentation](https://nuxt.com/docs/getting-started/deployment) for more information.
+- **app/pages/index.vue** : Page principale contenant la logique de filtrage et l'appel API (useAsyncData).
+- **app/components/PokemonCard.vue** : Composant réutilisable pour afficher les détails d'un Pokémon et gérer l'événement de mise en favori.
