@@ -1,9 +1,11 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 
-const search =ref('')
+const search = ref('')
 const selectedType = ref('')
+const showOnlyFavorites = ref(false)
 const favorites = ref([])
+
 
 onMounted(() => {
   const saved = localStorage.getItem('pokedex-favs')
@@ -21,37 +23,61 @@ const toggleFavorite = (id) => {
   localStorage.setItem('pokedex-favs', JSON.stringify(favorites.value))
 }
 
-// --- Appel à l'API ---
-  
-const { data: pokemons, pending, error } = await useAsyncData('pokemons-list', async () => {
-  // 1. Récupérer la liste des 151 premiers
-  const response = await $fetch('https://pokeapi.co/api/v2/pokemon?limit=151')
-  
-  // 2. Récupérer les détails pour chaque Pokémon en parallèle
-  const detailPromises = response.results.map(p => $fetch(p.url))
-  const details = await Promise.all(detailPromises)
-  
-  // 3. Transformer les données 
-  return details.map(p => ({
-    id: p.id,
-    name: p.name.charAt(0).toUpperCase() + p.name.slice(1),
-    image: p.sprites.other['official-artwork'].front_default,
-    types: p.types.map(t => t.type.name),
-    height: p.height / 10,
-    weight: p.weight / 10
-  }))
+const mapPokemon = (p) => ({
+  id: p.id,
+  name: p.name.charAt(0).toUpperCase() + p.name.slice(1),
+  image: p.sprites.other['official-artwork'].front_default,
+  types: p.types.map(t => t.type.name),
+  height: p.height / 10,
+  weight: p.weight / 10
 })
 
-const showOnlyFavorites = ref(false)
-  
+const currentPage = ref(1)
+const limit = 20
+const totalByType = ref(0)
+
+const {data, pending, error, refresh} = await useAsyncData('pokemon', async ()=>{
+
+  if (search.value){
+    const p = await $fetch(`https://pokeapi.co/api/v2/pokemon/${search.value.toLowerCase()}`)
+
+    totalByType.value = 1
+    return [mapPokemon(p)]
+  } 
+
+  if (selectedType.value) {       
+    const typeData = await $fetch(`https://pokeapi.co/api/v2/type/${selectedType.value}?limit=${limit}&offset=${(currentPage.value -1) * limit}`) 
+    
+    totalByType.value = typeData.pokemon.length
+
+    const start = (currentPage.value -1) * limit
+    const end = start + limit
+
+    const pagePokemon = typeData.pokemon.slice(start, end)
+    
+    const details = await Promise.all(
+        pagePokemon.map(p =>
+          $fetch(p.pokemon.url)
+        )
+    )
+    return details.map(mapPokemon)    
+  }
+  totalByType.value = 0
+  return []
+  }, 
+  {
+    watch: [search, selectedType, currentPage]
+  }
+
+)
+refresh()
+
 const filteredPokemons = computed(() => {
-  if (!pokemons.value) return []
-  return pokemons.value.filter(p => {
-    const matchesName = p.name.toLowerCase().includes(search.value.toLowerCase())
-    const matchesType = !selectedType.value || p.types.includes(selectedType.value)
+  if (!data.value) return []
+  return data.value.filter(p => {    
     const matchesFav = !showOnlyFavorites.value || favorites.value.includes(p.id)
 
-    return matchesName && matchesType && matchesFav
+    return matchesFav
   })
 })
 
@@ -61,10 +87,11 @@ const filteredPokemons = computed(() => {
 
 <div class="container">
     <h1>Pokédex</h1>
-    <input v-model="search" placesholder="Rechercher un Pokémon par nom..."/>
+    <input v-model="search" placeholder="Rechercher un Pokémon"/>
+    
 
     <div v-if="pending" class="status-message">
-      <el-skeleton :rows="5" animated />
+      <el-skeleton :rows="4" animated />
       <p>Chargement des Pokémon...</p>
     </div>
     
@@ -81,6 +108,7 @@ const filteredPokemons = computed(() => {
         <el-radio-button label="water">Water</el-radio-button>
       </el-radio-group>
     </div>
+    
     <el-switch
           v-model="showOnlyFavorites"
           active-text="Voir uniquement mes favoris"
@@ -88,7 +116,12 @@ const filteredPokemons = computed(() => {
     />
 
     <div class="pokemon-list">
-      <PokemonCard v-for="pokemon in filteredPokemons":key="pokemon.name":pokemon="pokemon":is-favorite="favorites.includes(pokemon.id)"@toggle-fav="toggleFavorite(pokemon.id)" />
+      <PokemonCard v-for="pokemon in filteredPokemons"
+      :key="pokemon.id"
+      :pokemon="pokemon"
+      :is-favorite="favorites.includes(pokemon.id)"
+      @toggle-fav="toggleFavorite(pokemon.id)" 
+      />
     </div>
 </div>
 
